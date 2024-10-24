@@ -38,6 +38,12 @@ Module['ready'] = new Promise(function(resolve, reject) {
       }
     
 
+      if (!Object.getOwnPropertyDescriptor(Module['ready'], '_ScreenOrientationWebGL_onOrientationChange')) {
+        Object.defineProperty(Module['ready'], '_ScreenOrientationWebGL_onOrientationChange', { configurable: true, get: function() { abort('You are getting _ScreenOrientationWebGL_onOrientationChange on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
+        Object.defineProperty(Module['ready'], '_ScreenOrientationWebGL_onOrientationChange', { configurable: true, set: function() { abort('You are setting _ScreenOrientationWebGL_onOrientationChange on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
+      }
+    
+
       if (!Object.getOwnPropertyDescriptor(Module['ready'], '_ReleaseKeys')) {
         Object.defineProperty(Module['ready'], '_ReleaseKeys', { configurable: true, get: function() { abort('You are getting _ReleaseKeys on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
         Object.defineProperty(Module['ready'], '_ReleaseKeys', { configurable: true, set: function() { abort('You are setting _ReleaseKeys on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
@@ -94,7 +100,12 @@ Module['ready'] = new Promise(function(resolve, reject) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
+Module['ScreenOrientationWebGL'] = Module['ScreenOrientationWebGL'] || {};
 
+Module['ScreenOrientationWebGL'].onOrientationChange = function(orientation) {
+	this.onOrientationChangeInternal = this.onOrientationChangeInternal || Module.cwrap("ScreenOrientationWebGL_onOrientationChange", null, ["number"]);
+	this.onOrientationChangeInternal(orientation);
+}
 
 
 // Emscripten 1.x had a function Pointer_stringify() to marshal C strings to JS strings. That has been obsoleted by the new UTF8/16/32ToString() API family.
@@ -1994,13 +2005,13 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  5502224: function() {return Module.webglContextAttributes.premultipliedAlpha;},  
- 5502285: function() {return Module.webglContextAttributes.preserveDrawingBuffer;},  
- 5502349: function() {return Module.webglContextAttributes.powerPreference;},  
- 5502407: function() {Module['emscripten_get_now_backup'] = performance.now;},  
- 5502462: function($0) {performance.now = function() { return $0; };},  
- 5502510: function($0) {performance.now = function() { return $0; };},  
- 5502558: function() {performance.now = Module['emscripten_get_now_backup'];}
+  5502704: function() {return Module.webglContextAttributes.premultipliedAlpha;},  
+ 5502765: function() {return Module.webglContextAttributes.preserveDrawingBuffer;},  
+ 5502829: function() {return Module.webglContextAttributes.powerPreference;},  
+ 5502887: function() {Module['emscripten_get_now_backup'] = performance.now;},  
+ 5502942: function($0) {performance.now = function() { return $0; };},  
+ 5502990: function($0) {performance.now = function() { return $0; };},  
+ 5503038: function() {performance.now = Module['emscripten_get_now_backup'];}
 };
 
 
@@ -5057,6 +5068,32 @@ var ASM_CONSTS = {
   		Module['MindAR'].invokeArReadyCallback = Module['MindAR'].invokeArReadyCallback || invokeArReadyCallback;
   		Module['MindAR'].invokeArErrorCallback = Module['MindAR'].invokeArErrorCallback || invokeArErrorCallback;
   		Module['MindAR'].setCameraProjectionMatrixCallback = Module['MindAR'].setCameraProjectionMatrixCallback || setCameraProjectionMatrixCallback;
+  	}
+
+  function _ScreenOrientationWebGL_Start(orient) {		
+  		if (Module['ScreenOrientationWebGL'].updateOrient)
+  			return;
+  			
+  		Module['ScreenOrientationWebGL'].orient = orient;
+  		Module['ScreenOrientationWebGL'].orientBuf = Module['ScreenOrientationWebGL'].orientBuf || new Int32Array(HEAP8.buffer, orient, 1);
+  		Module['ScreenOrientationWebGL'].updateOrient = Module['ScreenOrientationWebGL'].updateOrient || function () {
+  			if (Module['ScreenOrientationWebGL'].orientBuf.byteLength === 0)//buffer changed size, need to get new reference
+  				Module['ScreenOrientationWebGL'].orientBuf = new Int32Array(HEAP8.buffer, Module['ScreenOrientationWebGL'].orient, 1);
+  			//var ori = (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation;
+  			//if (!ori)//safari. Commented this out because since iOS 16.4, screen.orientation is supported but works differently than other browsers. window.orientation works universally.
+  				var ori = window.orientation === 0 ? "portrait-primary" : window.orientation === 180 ? "portrait-secondary" : window.orientation === 90 ? "landscape-primary" : "landscape-secondary";
+  			Module['ScreenOrientationWebGL'].orientBuf[0] = ori === "portrait-primary" ? 0 : ori === "portrait-secondary" ? 1 : ori === "landscape-primary" ? 2 : 3;
+  			Module['ScreenOrientationWebGL'].onOrientationChange(Module['ScreenOrientationWebGL'].orientBuf[0]);
+  		}
+  		Module['ScreenOrientationWebGL'].updateOrient();
+  		window.addEventListener("orientationchange", Module['ScreenOrientationWebGL'].updateOrient);
+  	}
+
+  function _ScreenOrientationWebGL_Stop() {
+  		if (Module['ScreenOrientationWebGL'].updateOrient) {
+  			window.removeEventListener("orientationchange", Module['ScreenOrientationWebGL'].updateOrient);
+  			Module['ScreenOrientationWebGL'].updateOrient = undefined;
+  		}
   	}
 
   function ___assert_fail(condition, filename, line, func) {
@@ -15945,6 +15982,8 @@ var asmLibraryArg = {
   "MindAR_getNumberMindARImageTargets": _MindAR_getNumberMindARImageTargets,
   "MindAR_isRunning": _MindAR_isRunning,
   "MindAR_storeCallbacks": _MindAR_storeCallbacks,
+  "ScreenOrientationWebGL_Start": _ScreenOrientationWebGL_Start,
+  "ScreenOrientationWebGL_Stop": _ScreenOrientationWebGL_Stop,
   "__assert_fail": ___assert_fail,
   "__cxa_allocate_exception": ___cxa_allocate_exception,
   "__cxa_begin_catch": ___cxa_begin_catch,
@@ -16329,6 +16368,9 @@ var asmLibraryArg = {
 var asm = createWasm();
 /** @type {function(...*):?} */
 var ___wasm_call_ctors = Module["___wasm_call_ctors"] = createExportWrapper("__wasm_call_ctors");
+
+/** @type {function(...*):?} */
+var _ScreenOrientationWebGL_onOrientationChange = Module["_ScreenOrientationWebGL_onOrientationChange"] = createExportWrapper("ScreenOrientationWebGL_onOrientationChange");
 
 /** @type {function(...*):?} */
 var _ReleaseKeys = Module["_ReleaseKeys"] = createExportWrapper("ReleaseKeys");
