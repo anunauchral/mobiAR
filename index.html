@@ -30,7 +30,7 @@
 	  var progressBarFull = document.querySelector("#unity-progress-bar-full");
 	  
 	  /*mindar code*/
-	  var mindARStr = "<a-scene id='MindAR-scene' mindar-image='imageTargetSrc: Compiled Target/target.mind; autoStart: true; maxTrack: 3; numberTrack: 19; uiError:yes; uiLoading:yes; uiScanning:yes; uiScanningOnTargetLost: yes; filterMinCF: 0.00001; filterBeta: 100; warmupTolerance: 5; missTolerance: 3;' color-space='sRGB' renderer='colorManagement: true, physicallyCorrectLights' vr-mode-ui='enabled: false' device-orientation-permission-ui='enabled: false'>\n\t<a-camera position='0 0 0' look-controls='enabled: false'></a-camera>\n";
+	  var mindARStr = "<a-scene id='MindAR-scene' mindar-image='imageTargetSrc: Compiled Target/target.mind; autoStart: true; maxTrack: 3; numberTrack: 19; uiError:yes; uiLoading:yes; uiScanning:yes; uiScanningOnTargetLost: yes; filterMinCF: 0.00001; filterBeta: 1000; warmupTolerance: 5; missTolerance: 3;' color-space='sRGB' renderer='colorManagement: true, physicallyCorrectLights' vr-mode-ui='enabled: false' device-orientation-permission-ui='enabled: false'>\n\t<a-camera position='0 0 0' look-controls='enabled: false'></a-camera>\n";
 	  
 	  var imageTargetsStr = '';
 	  for (var i = 0; i < 19; ++i) {
